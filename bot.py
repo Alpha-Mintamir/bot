@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-BACKEND_URL = 'https://ischatbot.onrender.com/chat'
+BACKEND_URL = 'https://bot-8psi.onrender.com/chat'
 
 def format_for_telegram(text: str) -> str:
     """Format text for Telegram with proper Markdown V2 formatting"""
