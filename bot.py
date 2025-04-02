@@ -128,10 +128,14 @@ def main():
 @app.route('/' + TELEGRAM_TOKEN, methods=['POST'])
 async def webhook():
     """Handle incoming webhook requests from Telegram."""
-    if request.method == "POST":
-        update = Update.de_json(request.get_json(), application.bot)
-        await application.process_update(update)
-        return 'ok', 200
+    try:
+        if request.method == "POST":
+            update = Update.de_json(request.get_json(), application.bot)
+            await application.process_update(update)
+            return 'ok', 200
+    except Exception as e:
+        logger.error(f"Error in webhook: {str(e)}")
+        return 'error', 500
 
 @app.route('/')
 def index():
