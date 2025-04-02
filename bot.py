@@ -106,31 +106,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Initialize Flask app
 app = Flask(__name__)
 
-# Modify main() to use webhook
-def main():
-    """Start the bot."""
-    # Create the Application
-    application = Application.builder().token(TELEGRAM_TOKEN).build()
+# Create the Application globally
+application = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    # Add handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    # Set webhook
-    webhook_url = os.getenv('WEBHOOK_URL')  # Add this to your .env file
-    application.run_webhook(
-        listen='0.0.0.0',
-        port=int(os.getenv('PORT', 5000)),
-        webhook_url=webhook_url
-    )
+# Add handlers
+application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("help", help_command))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 @app.route('/' + TELEGRAM_TOKEN, methods=['POST'])
 async def webhook():
     """Handle incoming webhook requests from Telegram."""
     try:
+        logger.info("Received webhook request")
         if request.method == "POST":
             update = Update.de_json(request.get_json(), application.bot)
+            logger.info(f"Processing update: {update}")
             await application.process_update(update)
             return 'ok', 200
     except Exception as e:
@@ -141,6 +132,20 @@ async def webhook():
 def index():
     """Simple health check endpoint."""
     return 'Bot is running!'
+
+def main():
+    """Start the bot."""
+    try:
+        # Set webhook
+        webhook_url = os.getenv('WEBHOOK_URL')
+        logger.info(f"Setting webhook URL: {webhook_url}")
+        application.run_webhook(
+            listen='0.0.0.0',
+            port=int(os.getenv('PORT', 5000)),
+            webhook_url=webhook_url
+        )
+    except Exception as e:
+        logger.error(f"Error in main: {str(e)}")
 
 if __name__ == '__main__':
     main() 
