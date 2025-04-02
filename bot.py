@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 import logging
 import re
+from flask import Flask, request
 
 # Set up logging
 logging.basicConfig(
@@ -102,6 +103,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='MarkdownV2'
         )
 
+# Initialize Flask app
+app = Flask(__name__)
+
+# Modify main() to use webhook
 def main():
     """Start the bot."""
     # Create the Application
@@ -112,9 +117,26 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Run the bot until the user presses Ctrl-C
-    logger.info("Starting bot...")
-    application.run_polling()
+    # Set webhook
+    webhook_url = os.getenv('WEBHOOK_URL')  # Add this to your .env file
+    application.run_webhook(
+        listen='0.0.0.0',
+        port=int(os.getenv('PORT', 5000)),
+        webhook_url=webhook_url
+    )
+
+@app.route('/' + TELEGRAM_TOKEN, methods=['POST'])
+async def webhook():
+    """Handle incoming webhook requests from Telegram."""
+    if request.method == "POST":
+        update = Update.de_json(request.get_json(), application.bot)
+        await application.process_update(update)
+        return 'ok', 200
+
+@app.route('/')
+def index():
+    """Simple health check endpoint."""
+    return 'Bot is running!'
 
 if __name__ == '__main__':
     main() 
